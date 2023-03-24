@@ -1,63 +1,70 @@
 <!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shane Wang | share</title>
-    <!-- Favicon -->
-    <link rel="icon" href="" type="image/x-icon" />
-    <!-- Font Awesome icons -->
-    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css">
-    <!-- Core theme CSS -->
-    <link rel="stylesheet" href="style.css">
-  </head>
+<html>
+<head>
+	<title>My Linktree</title>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<style>
+		body {
+			font-family: Arial, Helvetica, sans-serif;
+			margin: 0;
+			padding: 0;
+		}
 
-  <body>
-    <!-- Parallax Pixel Background Animation -->
-    <section class="animated-background">
-      <div id="stars1"></div>
-      <div id="stars2"></div>
-      <div id="stars3"></div>
-    </section>
-    <!-- End of Parallax Pixel Background Animation -->
+		.container {
+			display: flex;
+			flex-wrap: wrap;
+			justify-content: center;
+			align-items: center;
+			height: 100vh;
+		}
 
-    <a id="profilePicture" href="#popup">
-      <img src="https://github.com/ShaneWang321/shane/blob/main/S__49078274.jpg?raw=true" alt="Profile Picture">
-    </a>
+		.item {
+			text-align: center;
+			margin: 20px;
+			flex-basis: 300px;
+		}
 
-    <div class="overlay" id="popup">
-      <div class="popup">
-        <div class="popup-photo">
-          <a href="https://github.com/ShaneWang321/shane/blob/main/S__49078274.jpg?raw=true" target="_blank">
-            <img src="https://github.com/ShaneWang321/shane/blob/main/S__49078274.jpg?raw=true" alt="Profile Picture">
-          </a>
-        </div>
-        <div class="popup-quote">
-          
-        </div>
-        <a class="popup-close" onclick="history.back()">&times;</a>
-      </div>
-    </div>
+		.item a {
+			display: block;
+			padding: 20px;
+			background-color: #fff;
+			box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+			border-radius: 5px;
+			transition: all 0.3s ease-in-out;
+			color: #333;
+			font-size: 18px;
+			font-weight: 600;
+			text-decoration: none;
+		}
 
-    <div id="userName">
-      @紹恩
-    </div>
-
-    <div id="links">
-      
-      <a class="link" href="https://www.facebook.com/profile.php?id=100012188029507&mibextid=LQQJ4d" target="_blank">
-        <i class="fab fa-facebook">&nbsp;</i>Facebook
-      </a>
-      <a class="link" href="https://www.instagram.com/invites/contact/?i=lssn7uui9wi&utm_content=1t3tfet" target="_blank">
-        <i class="fab fa-instagram">&nbsp;</i>Instagram
-      </a>
-      <a class="link" href="https://link-ten-iota.vercel.app" target="_blank">
-        <i class="fab fa-link">&nbsp;</i>匿名留言
-      </a>
-    </div>
-
-    <div id="hashtag">
-      #Fighting❤
-    </div>
-  </body>
+		.item a:hover {
+			transform: translateY(-5px);
+			box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+			background-color: #f7f7f7;
+		}
+	</style>
+</head>
+<body>
+	<div class="container">
+		<div class="item">
+			<a href="https://www.example.com/">Example</a>
+		</div>
+		<div class="item">
+			<a href="https://www.example.com/">Example</a>
+		</div>
+		<div class="item">
+			<a href="https://www.example.com/">Example</a>
+		</div>
+		<div class="item">
+			<a href="https://www.example.com/">Example</a>
+		</div>
+		<div class="item">
+			<a href="https://www.example.com/">Example</a>
+		</div>
+		<div class="item">
+			<a href="https://www.example.com/">Example</a>
+		</div>
+	</div>
+</body>
 </html>
