@@ -1,97 +1,63 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
-    <meta charset="utf-8">
-    <title>My Linktree with Dino Game</title>
-    <style>
-      /* 小恐龍的樣式 */
-      #dino {
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        width: 40px;
-        height: 60px;
-        background-image: url('https://raw.githubusercontent.com/CodeExplainedRepo/Chrome-Dino-Game-JS/master/img/DinoSprites.png');
-        background-size: cover;
-        animation: run 0.8s infinite;
-      }
-      
-      /* 跑步動畫 */
-      @keyframes run {
-        from { background-position-x: 0px; }
-        to { background-position-x: -260px; }
-      }
-      
-      /* 障礙物的樣式 */
-      .obstacle {
-        position: absolute;
-        bottom: 0;
-        right: 0;
-        width: 30px;
-        height: 30px;
-        background-color: red;
-        animation: move 3s linear infinite;
-      }
-      
-      /* 移動動畫 */
-      @keyframes move {
-        from { right: 0; }
-        to { right: 100%; }
-      }
-      
-      /* 分數樣式 */
-      #score {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        font-size: 24px;
-        font-family: monospace;
-        color: white;
-      }
-    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shane Wang | share</title>
+    <!-- Favicon -->
+    <link rel="icon" href="" type="image/x-icon" />
+    <!-- Font Awesome icons -->
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css">
+    <!-- Core theme CSS -->
+    <link rel="stylesheet" href="style.css">
   </head>
+
   <body>
-    <!-- 這裡是你的Linktree頁面內容 -->
-    <h1>Welcome to my Linktree!</h1>
-    <ul>
-      <li><a href="#">Link 1</a></li>
-      <li><a href="#">Link 2</a></li>
-      <li><a href="#">Link 3</a></li>
-    </ul>
-    
-    <!-- 遊戲內容 -->
-    <div id="game">
-      <div id="dino"></div>
-      <div id="score">0</div>
+    <!-- Parallax Pixel Background Animation -->
+    <section class="animated-background">
+      <div id="stars1"></div>
+      <div id="stars2"></div>
+      <div id="stars3"></div>
+    </section>
+    <!-- End of Parallax Pixel Background Animation -->
+
+    <a id="profilePicture" href="#popup">
+      <img src="https://github.com/ShaneWang321/shane/blob/main/S__49078274.jpg?raw=true" alt="Profile Picture">
+    </a>
+
+    <div class="overlay" id="popup">
+      <div class="popup">
+        <div class="popup-photo">
+          <a href="https://github.com/ShaneWang321/shane/blob/main/S__49078274.jpg?raw=true" target="_blank">
+            <img src="https://github.com/ShaneWang321/shane/blob/main/S__49078274.jpg?raw=true" alt="Profile Picture">
+          </a>
+        </div>
+        <div class="popup-quote">
+          
+        </div>
+        <a class="popup-close" onclick="history.back()">&times;</a>
+      </div>
     </div>
-    
-    <script>
-      // 取得遊戲區域和小恐龍元素
-      const game = document.getElementById('game');
-      const dino = document.getElementById('dino');
-      let score = 0;
+
+    <div id="userName">
+      @紹恩
+    </div>
+
+    <div id="links">
       
-      // 每100毫秒更新一次遊戲畫面
-      setInterval(() => {
-        // 新增障礙物
-        if (Math.random() < 0.1) {
-          const obstacle = document.createElement('div');
-          obstacle.classList.add('obstacle');
-          game.appendChild(obstacle);
-        }
-        
-        // 更新分數
-        score++;
-        document.getElementById('score').textContent = score;
-        
-        // 碰撞檢測
-        const obstacles = document.querySelectorAll('.obstacle');
-        obstacles.forEach(obstacle => {
-          if (isColliding(dino, obstacle)) {
-            alert('Game Over! Your score is ' + score);
-            location.reload();
-          }
-        });
-      }, 100);
-      
-      //
+      <a class="link" href="https://www.facebook.com/profile.php?id=100012188029507&mibextid=LQQJ4d" target="_blank">
+        <i class="fab fa-facebook">&nbsp;</i>Facebook
+      </a>
+      <a class="link" href="https://www.instagram.com/invites/contact/?i=lssn7uui9wi&utm_content=1t3tfet" target="_blank">
+        <i class="fab fa-instagram">&nbsp;</i>Instagram
+      </a>
+      <a class="link" href="https://link-ten-iota.vercel.app" target="_blank">
+        <i class="fab fa-link">&nbsp;</i>匿名留言
+      </a>
+    </div>
+
+    <div id="hashtag">
+      #Fighting❤
+    </div>
+  </body>
+</html>
