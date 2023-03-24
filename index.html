@@ -1,70 +1,65 @@
 <!DOCTYPE html>
-<html>
-<head>
-	<title>My Linktree</title>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<style>
-		body {
-			font-family: Arial, Helvetica, sans-serif;
-			margin: 0;
-			padding: 0;
-		}
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Name | Links</title>
+    <!-- Favicon -->
+    <link rel="icon" href="" type="image/x-icon" />
+    <!-- Font Awesome icons -->
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css">
+    <!-- Core theme CSS -->
+    <link rel="stylesheet" href="style.css">
+  </head>
 
-		.container {
-			display: flex;
-			flex-wrap: wrap;
-			justify-content: center;
-			align-items: center;
-			height: 100vh;
-		}
+  <body>
+    <!-- Parallax Pixel Background Animation -->
+    <section class="animated-background">
+      <div id="stars1"></div>
+      <div id="stars2"></div>
+      <div id="stars3"></div>
+    </section>
+    <!-- End of Parallax Pixel Background Animation -->
 
-		.item {
-			text-align: center;
-			margin: 20px;
-			flex-basis: 300px;
-		}
+    <a id="profilePicture" href="#popup">
+      <img src="https://example.com/profile.jpg" alt="Profile Picture">
+    </a>
 
-		.item a {
-			display: block;
-			padding: 20px;
-			background-color: #fff;
-			box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-			border-radius: 5px;
-			transition: all 0.3s ease-in-out;
-			color: #333;
-			font-size: 18px;
-			font-weight: 600;
-			text-decoration: none;
-		}
+    <div class="overlay" id="popup">
+      <div class="popup">
+        <div class="popup-photo">
+          <a href="https://example.com/profile.jpg" target="_blank">
+            <img src="https://example.com/profile.jpg" alt="Profile Picture">
+          </a>
+        </div>
+        <div class="popup-quote">
+          <!-- Add a quote or description here -->
+        </div>
+        <a class="popup-close" onclick="history.back()">&times;</a>
+      </div>
+    </div>
 
-		.item a:hover {
-			transform: translateY(-5px);
-			box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-			background-color: #f7f7f7;
-		}
-	</style>
-</head>
-<body>
-	<div class="container">
-		<div class="item">
-			<a href="https://www.example.com/">Example</a>
-		</div>
-		<div class="item">
-			<a href="https://www.example.com/">Example</a>
-		</div>
-		<div class="item">
-			<a href="https://www.example.com/">Example</a>
-		</div>
-		<div class="item">
-			<a href="https://www.example.com/">Example</a>
-		</div>
-		<div class="item">
-			<a href="https://www.example.com/">Example</a>
-		</div>
-		<div class="item">
-			<a href="https://www.example.com/">Example</a>
-		</div>
-	</div>
-</body>
+    <div id="userName">
+      Your Name
+    </div>
+
+    <div id="links">
+      <a class="link" href="https://example.com/link1" target="_blank">
+        <i class="fas fa-link">&nbsp;</i>Link 1
+      </a>
+      <a class="link" href="https://example.com/link2" target="_blank">
+        <i class="fas fa-link">&nbsp;</i>Link 2
+      </a>
+      <a class="link" href="https://example.com/link3" target="_blank">
+        <i class="fas fa-link">&nbsp;</i>Link 3
+      </a>
+      <a class="link" href="https://example.com/link4" target="_blank">
+        <i class="fas fa-link">&nbsp;</i>Link 4
+      </a>
+    </div>
+
+    <div id="hashtag">
+      #YourHashtag
+    </div>
+  </body>
 </html>
