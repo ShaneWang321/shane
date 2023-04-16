@@ -33,12 +33,6 @@ body {
     -webkit-tap-highlight-color: transparent;
 }
 
-#blockquote.instagram-media {
-  margin: auto;
-  width: 100%;
-  max-width: 540px;
-}
-
 #userName {
     color: var(--accentColor);
     font-size: 1rem;
