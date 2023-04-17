@@ -111,6 +111,10 @@ body {
 .center {
   margin: auto;
 }
+.element {
+  padding-top: 20px;
+  padding-bottom: 20px;
+}
 
 
 /*-------------------------animations-----------------------*/
