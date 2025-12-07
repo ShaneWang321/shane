@@ -1,91 +1,115 @@
 <!DOCTYPE html>
-<html lang="zh">
-  <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shane Wang</title>
-    <!-- Favicon -->
-    <link rel="icon" href="" type="image/x-icon" />
-    <!-- Font Awesome icons -->
-    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css">
-    <!-- Core theme CSS -->
-    <link rel="stylesheet" href="style.css">
-    <script type="text/javascript">
-    (function(c,l,a,r,i,t,y){
-        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
-        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-    })(window, document, "clarity", "script", "onxgcytzfe");
-</script>
-  </head>
-  <!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-5P1BJMPR9R"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>About Shane Wang</title>
+  <meta name="description" content="Shane Wang - iOS Developer & FRC Robotics" />
+  <meta name="keywords" content="Shane Wang, App, Portfolio, About Me, FRC 9501" />
+  <meta property="og:title" content="About Shane Wang" />
+  <meta property="og:description" content="iOS Developer & Robotics Engineer" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://shane.vercel.app/" />
+  <meta property="og:image" content="https://github.com/ShaneWang321/shane/blob/main/IMG_0076.jpeg?raw=true" />
+  <link rel="icon" href="https://github.com/ShaneWang321/shane/blob/main/IMG_0076.jpeg?raw=true" type="image/jpeg" />
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="bg-stars"></div>
+  <div id="container"></div>
+  <button id="skip-btn">Skip</button>
+  <!-- <div class="interact-hint" id="hint">移動滑鼠互動</div> -->
 
-  gtag('config', 'G-5P1BJMPR9R');
-</script>
-  <body>
-    <!-- Parallax Pixel Background Animation -->
-    <section class="animated-background">
-      <div id="stars1"></div>
-      <div id="stars2"></div>
-      <div id="stars3"></div>
-    </section>
-    <!-- End of Parallax Pixel Background Animation -->
+  <div class="wrap" id="main-content">
+    <header class="hero">
+      <div class="avatar glass" id="avatarBtn">
+        <img src="https://github.com/ShaneWang321/shane/blob/main/IMG_0076.jpeg?raw=true" alt="Shane Wang">
+      </div>
+      <div class="title">
+        <h1>@Shane</h1>
+        <div class="tag">
+          <span class="chip">#Team</span>
+          <span class="chip" style="background:#eaf4ff">#About&nbsp;Me</span>
+          <span class="chip" style="background:#e7fff4">#My&nbsp;Apps</span>
+        </div>
+      </div>
+    </header>
 
-    <a id="profilePicture" href="#popup">
-      <img src="https://github.com/ShaneWang321/shane/blob/main/IMG_0076.jpeg?raw=true" alt="Profile Picture">
-    </a>
-
-    <div class="overlay" id="popup">
-      <div class="popup">
-        <div class="popup-photo">
-          <a href="https://github.com/ShaneWang321/shane/blob/main/IMG_0076.jpeg?raw=true" target="_blank">
-            <img src="https://github.com/ShaneWang321/shane/blob/main/IMG_0076.jpeg?raw=true" alt="Profile Picture">
+    <main class="grid">
+      <section class="card glass col-6">
+        <h3>FRC Team 9501</h3>
+        <div class="links">
+          <a class="link" href="https://www.instagram.com/frc_team_9501" target="_blank" rel="noreferrer">
+            <i class="fab fa-instagram"></i> FRC Team 9501 Instagram
+          </a>
+          <a class="link" href="https://sites.google.com/smsh.ntpc.edu.tw/frc9501/%E9%97%9C%E6%96%BC9501/2024" target="_blank" rel="noreferrer">
+            <i class="fas fa-external-link-alt"></i> FRC 9501 官網
           </a>
         </div>
-        <div class="popup-quote">
-          
+      </section>
+
+      <section class="card glass col-6">
+        <h3>About Me</h3>
+        <div class="links">
+          <a class="link" href="https://www.instagram.com/shane3.21/" target="_blank" rel="noreferrer">
+            <i class="fab fa-instagram"></i> Instagram
+          </a>
+          <a class="link" href="https://www.facebook.com/share/168xtHELET/" target="_blank" rel="noreferrer">
+            <i class="fab fa-facebook"></i> Facebook
+          </a>
         </div>
-        <a class="popup-close" onclick="history.back()">&times;</a>
-      </div>
-    </div>
+      </section>
 
-    <div id="userName">
-      @Shane
-    </div>
+      <section class="card glass col-12">
+        <h3>My Apps</h3>
+        <div class="links">
+          <a class="link" href="https://apps.apple.com/us/app/id6740634646" target="_blank" rel="noreferrer">
+            <i class="fas fa-book-open"></i> 單字大師
+          </a>
+          <a class="link" href="https://apps.apple.com/us/app/id6741060480" target="_blank" rel="noreferrer">
+            <i class="fas fa-sticky-note"></i> 每日一籤
+          </a>
+          <a class="link" href="https://apps.apple.com/tw/app/id6745725776" target="_blank" rel="noreferrer">
+            <i class="fas fa-bolt"></i> 閃讀
+          </a>
+          <a class="link" href="https://apps.apple.com/us/app/id6746669586" target="_blank" rel="noreferrer">
+            <i class="fas fa-feather"></i> 每日一詩
+          </a>
+          <a class="link" href="https://apps.apple.com/us/app/flashcollage/id6751058292" target="_blank" rel="noreferrer">
+            <i class="fas fa-th-large"></i> 閃拼 FlashCollage
+          </a>
+          <a class="link" href="https://apps.apple.com/tw/app/timorythm/id6751417417" target="_blank" rel="noreferrer">
+            <i class="fas fa-clock"></i> 時序 Timorythm
+          </a>
+        </div>
+      </section>
+    </main>
+  </div>
 
-    <div id="links">
-      <div id="hashtag">
-        #Team
-      </div>
-      <a class="link" href="https://www.instagram.com/frc_team_9501" target="_blank">
-        <i class="fab fa-instagram">&nbsp;</i>🤖FRC Team 9501
-      </a>
-      <div id="hashtag">
-        #About Me
-      </div>
-      <a class="link" href="https://www.instagram.com/shane3.21/" target="_blank">
-        <i class="fab fa-instagram">&nbsp;</i>Instagram
-      </a>
-      <a class="link" href="https://www.facebook.com/share/1GiaTWVgQh/?mibextid=wwXIfr" target="_blank">
-        <i class="fab fa-facebook">&nbsp;</i>Facebook
-      </a>
-      <div id="hashtag">
-        #My App
-      </div>
-      <a class="link" href="https://words-master.vercel.app/" target="_blank">
-        <i class="fab fa-github">&nbsp;</i>單字大師
-      </a>
-      <a class="link" href="https://straws.vercel.app/" target="_blank">
-        <i class="fab fa-github">&nbsp;</i>每日一籤
-      </a>
-            <a class="link" href="https://flashread.vercel.app/" target="_blank">
-        <i class="fab fa-github">&nbsp;</i>FlashRead閃讀
-      </a>
+  <div class="overlay" id="overlay">
+    <div class="dialog glass">
+      <img src="https://github.com/ShaneWang321/shane/blob/main/IMG_0076.jpeg?raw=true"
+           alt="Shane Wang"
+           style="width:100%;height:100%;object-fit:cover">
     </div>
-  </body> 
+  </div>
+
+  <!-- importmap + GSAP -->
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.152.0/build/three.module.js",
+      "three/addons/": "https://unpkg.com/three@0.152.0/examples/jsm/"
+    }
+  }
+  </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+  <!-- three.js 粒子動畫 -->
+  <script type="module" src="main.js"></script>
+
+  <!-- Avatar dialog + 卡片 hover -->
+  <script src="ui.js"></script>
+</body>
 </html>
