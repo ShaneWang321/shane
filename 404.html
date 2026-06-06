@@ -1,142 +1,100 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>410 Gone | 備審資料已收回</title>
-    <style>
-        :root {
-            --bg-color: #000000;
-            --card-bg: rgba(28, 28, 30, 0.65);
-            --text-main: #F5F5F7;
-            --text-muted: #86868B;
-            --accent: #0A84FF;
-            --code-bg: #1E1E1E;
-        }
-        body {
-            margin: 0;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            background-color: var(--bg-color);
-            background-image: radial-gradient(circle at 50% -20%, #2c2c3e 0%, #000 70%);
-            font-family: -apple-system, BlinkMacSystemFont, "SF Pro TC", "Helvetica Neue", sans-serif;
-            color: var(--text-main);
-        }
-        .container {
-            text-align: center;
-            background: var(--card-bg);
-            backdrop-filter: blur(24px);
-            -webkit-backdrop-filter: blur(24px);
-            padding: 3rem 2.5rem;
-            border-radius: 24px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            max-width: 500px;
-            width: 85%;
-            box-shadow: 0 24px 48px rgba(0,0,0,0.4);
-            animation: fadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        }
-        @keyframes fadeUp {
-            0% { opacity: 0; transform: translateY(20px); }
-            100% { opacity: 1; transform: translateY(0); }
-        }
-        .icon-container {
-            width: 64px;
-            height: 64px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 18px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin: 0 auto 1.5rem auto;
-            border: 1px solid rgba(255, 255, 255, 0.08);
-        }
-        .icon-container svg {
-            width: 32px;
-            height: 32px;
-            fill: var(--text-muted);
-        }
-        h1 {
-            font-size: 1.5rem;
-            font-weight: 600;
-            margin: 0 0 0.5rem 0;
-            letter-spacing: 0.5px;
-        }
-        p {
-            color: var(--text-muted);
-            font-size: 0.95rem;
-            line-height: 1.6;
-            margin-bottom: 2rem;
-        }
-      
-        .code-block {
-            background: var(--code-bg);
-            border-radius: 14px;
-            padding: 1.2rem;
-            text-align: left;
-            font-family: "SF Mono", Menlo, Monaco, Consolas, monospace;
-            font-size: 0.85rem;
-            line-height: 1.5;
-            margin-bottom: 2.5rem;
-            border: 1px solid rgba(255,255,255,0.08);
-            overflow-x: auto;
-        }
-        .kw { color: #FF7AB2; font-weight: 500; } /* 關鍵字 (Pink) */
-        .fn { color: #62A8EA; } /* 函數 (Blue) */
-        .ty { color: #DABAFF; } /* 型別 (Purple) */
-        .st { color: #FF8170; } /* 字串 (Orange) */
-        .co { color: #7F8C98; } /* 註解 (Gray) */
-        .en { color: #A2FCA2; } /* Enum (Green) */
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Page Not Found</title>
 
-        .btn {
-            display: inline-block;
-            background: var(--accent);
-            color: #FFF;
-            text-decoration: none;
-            padding: 0.8rem 2rem;
-            border-radius: 980px; 
-            font-weight: 500;
-            font-size: 0.95rem;
-            transition: all 0.2s ease;
-        }
-        .btn:hover {
-            background: #0071E3;
-            transform: scale(1.02);
-            box-shadow: 0 4px 12px rgba(10, 132, 255, 0.3);
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="icon-container">
-            <!-- Icon -->
-            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path d="M17 7h-4v2h4c1.65 0 3 1.35 3 3s-1.35 3-3 3h-4v2h4c2.76 0 5-2.24 5-5s-2.24-5-5-5zm-6 8H7c-1.65 0-3-1.35-3-3s1.35-3 3-3h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-2zm-3-4h8v2H8z" opacity="0.3"/>
-                <path d="M13 15l-3.5 3.5c-.78.78-2.05.78-2.83 0 -.78-.78-.78-2.05 0-2.83L10.17 12.17" fill="none" stroke="#86868B" stroke-width="2" stroke-linecap="round"/>
-            </svg>
-        </div>
-        
-        <h1>Error 410: Access Revoked</h1>
-        <p>此連結檔案的分享權限已關閉。</p>
-
-        <!-- 彩蛋 -->
-        <div class="code-block">
-<span class="co">// Checking portfolio access permissions...</span>
-<span class="kw">func</span> <span class="fn">fetchPortfolio</span>() <span class="kw">throws</span> -> <span class="ty">Portfolio</span> {
-    <span class="kw">let</span> permission = <span class="fn">checkStatus</span>(id: <span class="st">"admission-2026"</span>)
-    
-    <span class="kw">guard</span> permission == <span class="en">.active</span> <span class="kw">else</span> {
-        <span class="kw">throw</span> <span class="ty">NetworkError</span>.<span class="fn">linkExpired</span>(
-            reason: <span class="st">"Author revoked access"</span>
-        )
+<style>
+    body {
+        margin: 0;
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+        background: #000;
+        color: #f5f5f7;
     }
-    <span class="kw">return</span> <span class="ty">Portfolio</span>()
-}
-        </div>
 
-        <a href="https://shane.vercel.app" class="btn">返回個人主頁</a>
-    </div>
+    .box {
+        text-align: center;
+        padding: 40px;
+        background: rgba(255,255,255,0.05);
+        border-radius: 20px;
+        backdrop-filter: blur(20px);
+        width: 85%;
+        max-width: 420px;
+    }
+
+    h1 {
+        font-size: 22px;
+        margin-bottom: 10px;
+    }
+
+    p {
+        color: #86868b;
+        font-size: 14px;
+        margin-bottom: 25px;
+    }
+
+    a {
+        display: inline-block;
+        padding: 10px 20px;
+        border-radius: 999px;
+        background: #0A84FF;
+        color: white;
+        text-decoration: none;
+    }
+</style>
+</head>
+
+<body>
+
+<div class="box">
+    <h1>Page Not Found</h1>
+    <p>這個頁面不存在或已移動</p>
+
+    <a id="btn" href="#">正在導回...</a>
+</div>
+
+<script>
+/* ====== 你的兩個站 ====== */
+const ROUTES = {
+    dpdns: "https://shane.dpdns.org",
+    vercel: "https://shane.vercel.app",
+    default: "https://shane.vercel.app"
+};
+
+function detectTarget() {
+    const params = new URLSearchParams(window.location.search);
+    const from = params.get("from");
+    const ref = document.referrer;
+
+    let target = ROUTES.default;
+
+    // 1️⃣ query ?from=
+    if (from === "dpdns") target = ROUTES.dpdns;
+    if (from === "vercel") target = ROUTES.vercel;
+
+    // 2️⃣ referrer 判斷
+    if (ref.includes("shane.dpdns.org")) target = ROUTES.dpdns;
+    if (ref.includes("shane.vercel.app")) target = ROUTES.vercel;
+
+    return target;
+}
+
+const target = detectTarget();
+
+/* 按鈕 */
+document.getElementById("btn").href = target;
+document.getElementById("btn").innerText = "返回首頁";
+
+/* 自動跳轉 */
+setTimeout(() => {
+    window.location.href = target;
+}, 3000);
+</script>
+
 </body>
 </html>
