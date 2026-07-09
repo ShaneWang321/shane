@@ -7,11 +7,11 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 // 全域設定參數
 const CONFIG = {
   intro: {
-    count: 10000,   // 進場動畫粒子數量
+    count: 6000,    // 進場動畫粒子數量（原 10000，降低以減輕 GPU 負擔）
     duration: 5000 // 進場動畫持續時間 (毫秒)
   },
   background: {
-    count: 2000    // 背景常駐粒子數量
+    count: 1200    // 背景常駐粒子數量（原 2000）
   },
   color: {
     r: 120 / 255,  // 粒子顏色 R (0~1)
@@ -28,13 +28,16 @@ const CONFIG = {
     force: 0.35, // 滑鼠對粒子的排斥力道
     radius: 8    // 滑鼠影響半徑
   },
+  // 動畫最高幀率上限。桌機螢幕若是 120/144Hz，沒有上限的話 requestAnimationFrame
+  // 會用螢幕更新率全力狂繪，GPU 負擔跟著暴增，但視覺上完全感覺不出差異，所以主動限制。
+  targetFPS: 30,
   isMobile: /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) // 是否為行動裝置
 };
 
 // 行動裝置下調整粒子數，以避免太吃效能
 if (CONFIG.isMobile) {
-  CONFIG.intro.count = 4200;      // 手機版進場粒子（數量降低 + 顆粒放大，換取「紮實」而非「密集」的觀感）
-  CONFIG.background.count = 1200; // 手機版背景粒子
+  CONFIG.intro.count = 3000;      // 手機版進場粒子
+  CONFIG.background.count = 800;  // 手機版背景粒子
 }
 
 // ====== 響應式縮放：避免手機直向（窄螢幕）時「文字」超出可視範圍 ======
@@ -89,13 +92,15 @@ function init() {
 
   // 建立 WebGL 渲染器
   renderer = new THREE.WebGLRenderer({
-    antialias: !CONFIG.isMobile,   // 手機關閉抗鋸齒，換取載入/渲染效能
+    antialias: false,              // 全面關閉抗鋸齒：畫面會經過 Bloom 後製本來就偏柔和，
+                                    // 而且內容最終畫在 composer 的中介材質上，AA 幾乎沒有視覺效果卻很吃 GPU
     alpha: true,                   // 啟用透明背景
     powerPreference: 'high-performance' // 優先高效能 GPU 模式
   });
   renderer.setSize(innerWidth, innerHeight);                 // 設定畫布大小
-  // 手機限制在 1.5x，桌機限制在 2x，避免高 DPI 螢幕過度渲染拖慢速度
-  renderer.setPixelRatio(Math.min(devicePixelRatio, CONFIG.isMobile ? 1.5 : 2));
+  // 大幅降低 pixelRatio 上限：4K/5K 高解析度螢幕原本會用 2x 全解析度渲染 + Bloom，非常吃 GPU，
+  // 降到 1.25~1.5x 視覺上幾乎看不出差異，但 GPU 負擔可以省下一半以上。
+  renderer.setPixelRatio(Math.min(devicePixelRatio, CONFIG.isMobile ? 1.25 : 1.5));
   renderer.toneMapping = THREE.ACESFilmicToneMapping;        // HDR 色調映射
   document.getElementById('container').appendChild(renderer.domElement); // 插入畫布
 
@@ -104,8 +109,10 @@ function init() {
   composer.addPass(new RenderPass(scene, camera)); // 基本渲染 pass
 
   // 加入 UnrealBloomPass 做發光效果
+  // Bloom 內部會做多層降採樣模糊，用來計算模糊的解析度用一半畫布大小即可，
+  // 效果幾乎沒有差異（Bloom 本來就是柔光模糊），但運算量直接減半。
   bloomPass = new UnrealBloomPass(
-    new THREE.Vector2(innerWidth, innerHeight), // 效果使用的解析度
+    new THREE.Vector2(innerWidth * 0.5, innerHeight * 0.5), // 效果使用的解析度（降為一半）
     CONFIG.bloom.strength,                      // 發光強度
     CONFIG.bloom.radius,                        // 模糊半徑
     CONFIG.bloom.threshold                      // 閾值
@@ -528,8 +535,19 @@ function transitionToBackground() {
 }
 
 // 每幀的動畫 loop
-function animate() {
-  requestAnimationFrame(animate); // 要求下一幀
+// 加上兩層節流：
+// 1) FPS 上限：不管螢幕更新率多高，最多以 CONFIG.targetFPS 的速度渲染，視覺上感覺不出差異
+// 2) 分頁背景時完全暫停：使用者切到別的分頁/視窗時，沒有必要繼續佔用 GPU 運算
+const FRAME_INTERVAL = 1000 / CONFIG.targetFPS;
+let lastFrameTime = 0;
+let rafId = null;
+
+function animate(now = 0) {
+  rafId = requestAnimationFrame(animate); // 要求下一幀
+
+  // 距離上一次真正渲染還不到目標間隔時間，就先跳過，不做任何運算
+  if (now - lastFrameTime < FRAME_INTERVAL) return;
+  lastFrameTime = now;
 
   if (phase === 'intro') {
     // 進場時旋轉快一點
@@ -545,6 +563,18 @@ function animate() {
   composer.render();
 }
 
+// 分頁切到背景（切分頁、切視窗、螢幕鎖定）時直接停止渲染迴圈；
+// 使用者切回來再重新啟動，避免背景分頁還在持續吃 GPU。
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    cancelAnimationFrame(rafId);
+    rafId = null;
+  } else if (rafId === null) {
+    lastFrameTime = 0;
+    animate();
+  }
+});
+
 // 視窗尺寸改變時，更新相機與 renderer
 // 加上 debounce：手機旋轉螢幕、網址列收合展開時 resize 會連續觸發多次，
 // 不 debounce 的話等於每次都重算+重建，很浪費效能。
@@ -554,6 +584,7 @@ function handleResize() {
   camera.updateProjectionMatrix();          // 重新計算投影矩陣
   renderer.setSize(innerWidth, innerHeight);      // 更新 renderer 大小
   composer.setSize(innerWidth, innerHeight);      // 更新後處理解析度
+  bloomPass.setSize(innerWidth * 0.5, innerHeight * 0.5); // Bloom 內部解析度維持在一半，持續節省 GPU
 
   const prevShapeScale = shapeScale;
   updateViewScale(); // 重新計算響應式縮放係數
