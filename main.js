@@ -33,9 +33,24 @@ const CONFIG = {
 
 // 行動裝置下調整粒子數，以避免太吃效能
 if (CONFIG.isMobile) {
-  CONFIG.intro.count = 8000;      // 手機版進場粒子
-  CONFIG.background.count = 2000; // 手機版背景粒子
+  CONFIG.intro.count = 5000;      // 手機版進場粒子（原 8000，降低以加快載入與渲染）
+  CONFIG.background.count = 1400; // 手機版背景粒子（原 2000）
 }
+
+// ====== 響應式縮放：避免手機直向（窄螢幕）時內容超出可視範圍 ======
+// 原本文字/球體/星環的座標都是「固定世界座標」，在寬螢幕(桌機)下剛好塞得進畫面，
+// 但手機直向時可視角度(frustum)寬度變窄很多，同樣的座標就會超出螢幕左右邊界。
+// 這裡依「目前螢幕比例 vs. 基準比例」算出一個縮放係數，套用在會決定視覺寬度的座標上。
+const BASE_ASPECT = 1.6;   // 視為「不需縮放」的基準比例，約略等同桌機寬螢幕
+const MIN_SCALE = 0.42;    // 縮放下限，避免極窄螢幕(例如摺疊機)縮到內容看不清楚
+let viewScale = 1;
+
+function updateViewScale() {
+  const aspect = innerWidth / innerHeight;
+  viewScale = aspect >= BASE_ASPECT ? 1 : Math.max(aspect / BASE_ASPECT, MIN_SCALE);
+  return viewScale;
+}
+updateViewScale();
 
 // three.js 場景相關全域變數
 let scene;           // 場景
@@ -68,12 +83,13 @@ function init() {
 
   // 建立 WebGL 渲染器
   renderer = new THREE.WebGLRenderer({
-    antialias: true,               // 抗鋸齒
+    antialias: !CONFIG.isMobile,   // 手機關閉抗鋸齒，換取載入/渲染效能
     alpha: true,                   // 啟用透明背景
     powerPreference: 'high-performance' // 優先高效能 GPU 模式
   });
   renderer.setSize(innerWidth, innerHeight);                 // 設定畫布大小
-  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));     // 限制高 DPI，避免太重
+  // 手機限制在 1.5x，桌機限制在 2x，避免高 DPI 螢幕過度渲染拖慢速度
+  renderer.setPixelRatio(Math.min(devicePixelRatio, CONFIG.isMobile ? 1.5 : 2));
   renderer.toneMapping = THREE.ACESFilmicToneMapping;        // HDR 色調映射
   document.getElementById('container').appendChild(renderer.domElement); // 插入畫布
 
@@ -124,7 +140,7 @@ function createParticles(num /* 粒子數量 */) {
     // 使用近似均勻分布在球面上的演算法
     const phi = Math.acos(-1 + (2 * i) / num);              // 緯度角
     const theta = Math.sqrt(num * Math.PI) * phi;           // 經度角 (漩渦式分布)
-    const r = 8;                                            // 球半徑
+    const r = 8 * viewScale;                                // 球半徑（依螢幕比例縮放，避免手機直向超出畫面）
 
     // 初始位置：球面附近 + 少許亂數抖動
     pos[i * 3]     = r * Math.cos(theta) * Math.sin(phi) + (Math.random() - 0.5) * 0.5; // x
@@ -320,14 +336,14 @@ function morphToText(text /* 要顯示的文字 */) {
     let tz; // 目標 z
 
     if (i < tp.length) {
-      // 前面一批粒子直接對應到文字點
-      tx = tp[i].x;
-      ty = tp[i].y;
+      // 前面一批粒子直接對應到文字點（乘上 viewScale，避免手機直向時文字比畫面還寬）
+      tx = tp[i].x * viewScale;
+      ty = tp[i].y * viewScale;
       tz = (Math.random() - 0.5) * 2; // Z 給一點深度亂數
     } else {
-      // 多出來的粒子放到外圍，避免全部擠在文字上
+      // 多出來的粒子放到外圍，避免全部擠在文字上（同樣套用縮放）
       const a = Math.random() * Math.PI * 2; // 隨機角度
-      const r = 20 + Math.random() * 15;     // 隨機半徑
+      const r = (20 + Math.random() * 15) * viewScale; // 隨機半徑
       tx = Math.cos(a) * r;
       ty = Math.sin(a) * r;
       tz = (Math.random() - 0.5) * 20;
@@ -358,7 +374,7 @@ function morphToSphere() {
     // 與 createParticles 類似的球面分布
     const phi = Math.acos(-1 + (2 * i) / count);
     const theta = Math.sqrt(count * Math.PI) * phi;
-    const r = 8; // 球半徑
+    const r = 8 * viewScale; // 球半徑（依螢幕比例縮放）
 
     const tx = r * Math.cos(theta) * Math.sin(phi) + (Math.random() - 0.5) * 0.5;
     const ty = r * Math.sin(theta) * Math.sin(phi) + (Math.random() - 0.5) * 0.5;
@@ -390,10 +406,10 @@ function morphToSpherePlanet() {
     const planetCount = Math.floor(count * planetRatio);
     const ringCount = count - planetCount;   // 剩下的做星環
   
-    const planetRadius = 6;                  // 星球半徑
-    const ringInner = 7.5;                   // 星環內半徑
-    const ringOuter = 11;                    // 星環外半徑
-    const ringThickness = 0.6;               // 星環厚度 (Y 方向)
+    const planetRadius = 6 * viewScale;               // 星球半徑（依螢幕比例縮放）
+    const ringInner = 7.5 * viewScale;                // 星環內半徑
+    const ringOuter = 11 * viewScale;                 // 星環外半徑
+    const ringThickness = 0.6 * viewScale;            // 星環厚度 (Y 方向)
   
     for (let i = 0; i < count; i++) {
       const idx = i * 3;
@@ -524,11 +540,37 @@ function animate() {
 }
 
 // 視窗尺寸改變時，更新相機與 renderer
-addEventListener('resize', () => {
+// 加上 debounce：手機旋轉螢幕、網址列收合展開時 resize 會連續觸發多次，
+// 不 debounce 的話等於每次都重算+重建，很浪費效能。
+let resizeTimer = null;
+function handleResize() {
   camera.aspect = innerWidth / innerHeight; // 更新畫面比例
   camera.updateProjectionMatrix();          // 重新計算投影矩陣
   renderer.setSize(innerWidth, innerHeight);      // 更新 renderer 大小
   composer.setSize(innerWidth, innerHeight);      // 更新後處理解析度
+
+  const prevScale = viewScale;
+  updateViewScale(); // 重新計算響應式縮放係數
+
+  // 如果比例變化夠大（例如手機直向 <-> 橫向），且目前是背景常駐階段，
+  // 重新 morph 一次讓粒子形狀依新的螢幕比例重新排列，避免旋轉後跑出畫面。
+  if (phase === 'background' && Math.abs(viewScale - prevScale) > 0.05) {
+    morphToSpherePlanet();
+  }
+}
+
+addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(handleResize, 150); // 150ms debounce
 });
+
+// iOS Safari 網址列收合/展開不一定會觸發 window 的 resize，
+// 用 visualViewport 補一層保險，確保畫布尺寸跟得上實際可視區域。
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(handleResize, 150);
+  });
+}
 
 init();

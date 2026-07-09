@@ -21,17 +21,21 @@ body {
   color: var(--text);
   font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", Roboto, sans-serif;
   background: radial-gradient(ellipse at 10% 10%, #0b1220 0%, #0a0f1a 100%);
-  overflow-x: hidden;
+  overflow-x: hidden; /* 保險：避免任何元素 1px 誤差造成橫向捲動 */
 }
 
 #container {
   position: fixed;
   top: 0; left: 0;
-  width: 100%; height: 100%;
+  width: 100%;
+  height: 100%;
+  height: 100dvh; /* 手機網址列收合/展開時，用動態視窗高度取代 innerHeight 的落差 */
   z-index: 100;
+  overflow: hidden; /* 保險：canvas 尺寸若有 1px 誤差也不會超出可視範圍 */
   transition: z-index 0s 0.5s, opacity 0.5s ease;
 }
 #container.background { z-index: -1; opacity: 0.65; }
+#container canvas { display: block; max-width: 100%; }
 
 .bg-stars {
   position: fixed; inset: 0;
@@ -183,4 +187,9 @@ header.hero { display: flex; align-items: center; gap: 24px; flex-wrap: wrap; ma
   .avatar { width: 64px; height: 64px; }
   .title h1 { font-size: 20px; }
   .chip { font-size: 11px; padding: 4px 8px; }
+}
+
+/* 若使用者開啟「減少動態效果」，直接停用進場淡入位移，加快可視內容出現速度 */
+@media (prefers-reduced-motion: reduce) {
+  .wrap { transition: opacity 0.3s ease; transform: none; }
 }
