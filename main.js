@@ -33,22 +33,28 @@ const CONFIG = {
 
 // 行動裝置下調整粒子數，以避免太吃效能
 if (CONFIG.isMobile) {
-  CONFIG.intro.count = 5000;      // 手機版進場粒子（原 8000，降低以加快載入與渲染）
-  CONFIG.background.count = 1400; // 手機版背景粒子（原 2000）
+  CONFIG.intro.count = 4200;      // 手機版進場粒子（數量降低 + 顆粒放大，換取「紮實」而非「密集」的觀感）
+  CONFIG.background.count = 1200; // 手機版背景粒子
 }
 
-// ====== 響應式縮放：避免手機直向（窄螢幕）時內容超出可視範圍 ======
-// 原本文字/球體/星環的座標都是「固定世界座標」，在寬螢幕(桌機)下剛好塞得進畫面，
-// 但手機直向時可視角度(frustum)寬度變窄很多，同樣的座標就會超出螢幕左右邊界。
-// 這裡依「目前螢幕比例 vs. 基準比例」算出一個縮放係數，套用在會決定視覺寬度的座標上。
-const BASE_ASPECT = 1.6;   // 視為「不需縮放」的基準比例，約略等同桌機寬螢幕
-const MIN_SCALE = 0.42;    // 縮放下限，避免極窄螢幕(例如摺疊機)縮到內容看不清楚
-let viewScale = 1;
+// ====== 響應式縮放：避免手機直向（窄螢幕）時「文字」超出可視範圍 ======
+// 文字(morphToText)是長條形狀，寬螢幕(桌機)剛好塞得下，但手機直向可視角度變窄，
+// 同樣座標會超出螢幕左右邊界，所以需要縮小。
+// 但球體/星球+星環是接近正圓的形狀，一般手機直向其實塞得下原本大小，
+// 如果跟文字用同一套縮放，會把球體也縮得又小又密、失去「壯碩」的量感，
+// 所以這裡拆成兩套獨立係數：textScale 縮得積極一點，shapeScale 只在極窄螢幕才介入。
+const TEXT_BASE_ASPECT = 1.6;    // 文字：視為「不需縮放」的基準比例
+const TEXT_MIN_SCALE = 0.42;     // 文字：縮放下限
+const SHAPE_BASE_ASPECT = 0.42;  // 形狀：只有比這個更窄（例如摺疊機）才開始縮小，一般手機不受影響
+const SHAPE_MIN_SCALE = 0.75;    // 形狀：縮放下限（比文字溫和很多）
+
+let textScale = 1;
+let shapeScale = 1;
 
 function updateViewScale() {
   const aspect = innerWidth / innerHeight;
-  viewScale = aspect >= BASE_ASPECT ? 1 : Math.max(aspect / BASE_ASPECT, MIN_SCALE);
-  return viewScale;
+  textScale = aspect >= TEXT_BASE_ASPECT ? 1 : Math.max(aspect / TEXT_BASE_ASPECT, TEXT_MIN_SCALE);
+  shapeScale = aspect >= SHAPE_BASE_ASPECT ? 1 : Math.max(aspect / SHAPE_BASE_ASPECT, SHAPE_MIN_SCALE);
 }
 updateViewScale();
 
@@ -140,7 +146,7 @@ function createParticles(num /* 粒子數量 */) {
     // 使用近似均勻分布在球面上的演算法
     const phi = Math.acos(-1 + (2 * i) / num);              // 緯度角
     const theta = Math.sqrt(num * Math.PI) * phi;           // 經度角 (漩渦式分布)
-    const r = 8 * viewScale;                                // 球半徑（依螢幕比例縮放，避免手機直向超出畫面）
+    const r = 8 * shapeScale;                               // 球半徑（極窄螢幕才縮放，一般手機維持原尺寸）
 
     // 初始位置：球面附近 + 少許亂數抖動
     pos[i * 3]     = r * Math.cos(theta) * Math.sin(phi) + (Math.random() - 0.5) * 0.5; // x
@@ -166,7 +172,7 @@ function createParticles(num /* 粒子數量 */) {
 
   // Points 材質 (加色混合 + HDR 感)
   const mat = new THREE.PointsMaterial({
-    size: CONFIG.isMobile ? 0.14 : 0.12, // 手機比較大顆一點
+    size: CONFIG.isMobile ? 0.17 : 0.12, // 手機顆粒放大（數量降低但顆粒變大，整體看起來更紮實）
     vertexColors: true,                  // 每個粒子使用自己的顏色
     blending: THREE.AdditiveBlending,    // 加色混合，產生發光感
     transparent: true,                   // 允許透明度
@@ -336,14 +342,14 @@ function morphToText(text /* 要顯示的文字 */) {
     let tz; // 目標 z
 
     if (i < tp.length) {
-      // 前面一批粒子直接對應到文字點（乘上 viewScale，避免手機直向時文字比畫面還寬）
-      tx = tp[i].x * viewScale;
-      ty = tp[i].y * viewScale;
+      // 前面一批粒子直接對應到文字點（乘上 textScale，避免手機直向時文字比畫面還寬）
+      tx = tp[i].x * textScale;
+      ty = tp[i].y * textScale;
       tz = (Math.random() - 0.5) * 2; // Z 給一點深度亂數
     } else {
       // 多出來的粒子放到外圍，避免全部擠在文字上（同樣套用縮放）
       const a = Math.random() * Math.PI * 2; // 隨機角度
-      const r = (20 + Math.random() * 15) * viewScale; // 隨機半徑
+      const r = (20 + Math.random() * 15) * textScale; // 隨機半徑
       tx = Math.cos(a) * r;
       ty = Math.sin(a) * r;
       tz = (Math.random() - 0.5) * 20;
@@ -374,7 +380,7 @@ function morphToSphere() {
     // 與 createParticles 類似的球面分布
     const phi = Math.acos(-1 + (2 * i) / count);
     const theta = Math.sqrt(count * Math.PI) * phi;
-    const r = 8 * viewScale; // 球半徑（依螢幕比例縮放）
+    const r = 8 * shapeScale; // 球半徑（極窄螢幕才縮放）
 
     const tx = r * Math.cos(theta) * Math.sin(phi) + (Math.random() - 0.5) * 0.5;
     const ty = r * Math.sin(theta) * Math.sin(phi) + (Math.random() - 0.5) * 0.5;
@@ -406,10 +412,10 @@ function morphToSpherePlanet() {
     const planetCount = Math.floor(count * planetRatio);
     const ringCount = count - planetCount;   // 剩下的做星環
   
-    const planetRadius = 6 * viewScale;               // 星球半徑（依螢幕比例縮放）
-    const ringInner = 7.5 * viewScale;                // 星環內半徑
-    const ringOuter = 11 * viewScale;                 // 星環外半徑
-    const ringThickness = 0.6 * viewScale;            // 星環厚度 (Y 方向)
+    const planetRadius = 6 * shapeScale;               // 星球半徑（極窄螢幕才縮放）
+    const ringInner = 7.5 * shapeScale;                // 星環內半徑
+    const ringOuter = 11 * shapeScale;                 // 星環外半徑
+    const ringThickness = 0.6 * shapeScale;            // 星環厚度 (Y 方向)
   
     for (let i = 0; i < count; i++) {
       const idx = i * 3;
@@ -549,12 +555,12 @@ function handleResize() {
   renderer.setSize(innerWidth, innerHeight);      // 更新 renderer 大小
   composer.setSize(innerWidth, innerHeight);      // 更新後處理解析度
 
-  const prevScale = viewScale;
+  const prevShapeScale = shapeScale;
   updateViewScale(); // 重新計算響應式縮放係數
 
   // 如果比例變化夠大（例如手機直向 <-> 橫向），且目前是背景常駐階段，
   // 重新 morph 一次讓粒子形狀依新的螢幕比例重新排列，避免旋轉後跑出畫面。
-  if (phase === 'background' && Math.abs(viewScale - prevScale) > 0.05) {
+  if (phase === 'background' && Math.abs(shapeScale - prevShapeScale) > 0.05) {
     morphToSpherePlanet();
   }
 }
