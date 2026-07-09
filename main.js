@@ -44,7 +44,7 @@ const CONFIG = {
 
 // 行動裝置下調整粒子數，以避免太吃效能
 if (CONFIG.isMobile) {
-  CONFIG.intro.count = 1800;       // 手機版進場粒子：降低 GSAP tween 與 GPU buffer 成本
+  CONFIG.intro.count = 2400;       // 手機版進場粒子：保住文字可讀性，同時低於桌機成本
   CONFIG.background.count = 450;   // 手機版背景粒子：常駐低負載
   CONFIG.colorIntensity = 3.2;     // 粒子變少時保留亮度，但避免過曝
   CONFIG.bloom.strength = 0.45;
@@ -349,6 +349,7 @@ function createTextPoints(text /* 要顯示的文字 */) {
 function morphToText(text /* 要顯示的文字 */) {
   const tp = createTextPoints(text);                     // 文字點陣列
   const pos = particles.geometry.attributes.position.array;
+  const textParticleCount = Math.min(count, tp.length);
 
   // 將整顆粒子球慢慢旋正
   gsap.to(particles.rotation, { x: 0, y: 0, z: 0, duration: 0.8 });
@@ -360,10 +361,14 @@ function morphToText(text /* 要顯示的文字 */) {
     let ty; // 目標 y
     let tz; // 目標 z
 
-    if (i < tp.length) {
+    if (i < textParticleCount) {
+      // 粒子不足時平均抽樣整個文字，避免只取到字母上半截。
+      const pointIndex = Math.floor((i / textParticleCount) * tp.length);
+      const point = tp[pointIndex];
+
       // 前面一批粒子直接對應到文字點（乘上 viewScale，避免手機直向時文字比畫面還寬）
-      tx = tp[i].x * viewScale;
-      ty = tp[i].y * viewScale;
+      tx = point.x * viewScale;
+      ty = point.y * viewScale;
       tz = (Math.random() - 0.5) * 2; // Z 給一點深度亂數
     } else {
       // 多出來的粒子放到外圍，避免全部擠在文字上（同樣套用縮放）
