@@ -5,13 +5,19 @@ import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 
 // 全域設定參數
+const isMobileDevice = (
+  /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ||
+  matchMedia('(max-width: 768px)').matches ||
+  matchMedia('(pointer: coarse)').matches
+);
+
 const CONFIG = {
   intro: {
-    count: 6000,    // 進場動畫粒子數量（原 10000，降低以減輕 GPU 負擔）
+    count: 10000,   // 進場動畫粒子數量
     duration: 5000 // 進場動畫持續時間 (毫秒)
   },
   background: {
-    count: 1200    // 背景常駐粒子數量（原 2000）
+    count: 2000    // 背景常駐粒子數量
   },
   color: {
     r: 120 / 255,  // 粒子顏色 R (0~1)
@@ -28,36 +34,37 @@ const CONFIG = {
     force: 0.35, // 滑鼠對粒子的排斥力道
     radius: 8    // 滑鼠影響半徑
   },
-  // 動畫最高幀率上限。桌機螢幕若是 120/144Hz，沒有上限的話 requestAnimationFrame
-  // 會用螢幕更新率全力狂繪，GPU 負擔跟著暴增，但視覺上完全感覺不出差異，所以主動限制。
-  targetFPS: 30,
-  isMobile: /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) // 是否為行動裝置
+  performance: {
+    useBloom: true,
+    maxFPS: 60,
+    enableTouchForce: true
+  },
+  isMobile: isMobileDevice // 是否為行動裝置
 };
 
 // 行動裝置下調整粒子數，以避免太吃效能
 if (CONFIG.isMobile) {
-  CONFIG.intro.count = 3000;      // 手機版進場粒子
-  CONFIG.background.count = 800;  // 手機版背景粒子
+  CONFIG.intro.count = 1800;       // 手機版進場粒子：降低 GSAP tween 與 GPU buffer 成本
+  CONFIG.background.count = 450;   // 手機版背景粒子：常駐低負載
+  CONFIG.colorIntensity = 3.2;     // 粒子變少時保留亮度，但避免過曝
+  CONFIG.bloom.strength = 0.45;
+  CONFIG.performance.useBloom = false;       // 手機關閉後處理，少一次高解析度 render pass
+  CONFIG.performance.maxFPS = 30;            // 背景動畫不需要滿 60fps
+  CONFIG.performance.enableTouchForce = false; // 觸控移動不逐粒子計算力場
 }
 
-// ====== 響應式縮放：避免手機直向（窄螢幕）時「文字」超出可視範圍 ======
-// 文字(morphToText)是長條形狀，寬螢幕(桌機)剛好塞得下，但手機直向可視角度變窄，
-// 同樣座標會超出螢幕左右邊界，所以需要縮小。
-// 但球體/星球+星環是接近正圓的形狀，一般手機直向其實塞得下原本大小，
-// 如果跟文字用同一套縮放，會把球體也縮得又小又密、失去「壯碩」的量感，
-// 所以這裡拆成兩套獨立係數：textScale 縮得積極一點，shapeScale 只在極窄螢幕才介入。
-const TEXT_BASE_ASPECT = 1.6;    // 文字：視為「不需縮放」的基準比例
-const TEXT_MIN_SCALE = 0.42;     // 文字：縮放下限
-const SHAPE_BASE_ASPECT = 0.42;  // 形狀：只有比這個更窄（例如摺疊機）才開始縮小，一般手機不受影響
-const SHAPE_MIN_SCALE = 0.75;    // 形狀：縮放下限（比文字溫和很多）
-
-let textScale = 1;
-let shapeScale = 1;
+// ====== 響應式縮放：避免手機直向（窄螢幕）時內容超出可視範圍 ======
+// 原本文字/球體/星環的座標都是「固定世界座標」，在寬螢幕(桌機)下剛好塞得進畫面，
+// 但手機直向時可視角度(frustum)寬度變窄很多，同樣的座標就會超出螢幕左右邊界。
+// 這裡依「目前螢幕比例 vs. 基準比例」算出一個縮放係數，套用在會決定視覺寬度的座標上。
+const BASE_ASPECT = 1.6;   // 視為「不需縮放」的基準比例，約略等同桌機寬螢幕
+const MIN_SCALE = 0.42;    // 縮放下限，避免極窄螢幕(例如摺疊機)縮到內容看不清楚
+let viewScale = 1;
 
 function updateViewScale() {
   const aspect = innerWidth / innerHeight;
-  textScale = aspect >= TEXT_BASE_ASPECT ? 1 : Math.max(aspect / TEXT_BASE_ASPECT, TEXT_MIN_SCALE);
-  shapeScale = aspect >= SHAPE_BASE_ASPECT ? 1 : Math.max(aspect / SHAPE_BASE_ASPECT, SHAPE_MIN_SCALE);
+  viewScale = aspect >= BASE_ASPECT ? 1 : Math.max(aspect / BASE_ASPECT, MIN_SCALE);
+  return viewScale;
 }
 updateViewScale();
 
@@ -75,6 +82,7 @@ let phase = 'intro';                  // 動畫階段: 'intro' 或 'background'
 let introComplete = false;            // 是否已經進入背景階段
 let mouse = { x: 0, y: 0, active: false }; // 滑鼠在 NDC 座標與啟用狀態
 let targetPositions = null;           // 背景階段時的粒子目標位置陣列
+let lastFrameTime = 0;                 // 手機限幀用，避免背景動畫持續滿載
 
 // 初始化 three.js 場景與動畫
 function init() {
@@ -92,32 +100,30 @@ function init() {
 
   // 建立 WebGL 渲染器
   renderer = new THREE.WebGLRenderer({
-    antialias: false,              // 全面關閉抗鋸齒：畫面會經過 Bloom 後製本來就偏柔和，
-                                    // 而且內容最終畫在 composer 的中介材質上，AA 幾乎沒有視覺效果卻很吃 GPU
+    antialias: !CONFIG.isMobile,   // 手機關閉抗鋸齒，換取載入/渲染效能
     alpha: true,                   // 啟用透明背景
-    powerPreference: 'high-performance' // 優先高效能 GPU 模式
+    powerPreference: CONFIG.isMobile ? 'low-power' : 'high-performance'
   });
   renderer.setSize(innerWidth, innerHeight);                 // 設定畫布大小
-  // 大幅降低 pixelRatio 上限：4K/5K 高解析度螢幕原本會用 2x 全解析度渲染 + Bloom，非常吃 GPU，
-  // 降到 1.25~1.5x 視覺上幾乎看不出差異，但 GPU 負擔可以省下一半以上。
-  renderer.setPixelRatio(Math.min(devicePixelRatio, CONFIG.isMobile ? 1.25 : 1.5));
+  // 手機限制在 1.5x，桌機限制在 2x，避免高 DPI 螢幕過度渲染拖慢速度
+  renderer.setPixelRatio(Math.min(devicePixelRatio, CONFIG.isMobile ? 1 : 2));
   renderer.toneMapping = THREE.ACESFilmicToneMapping;        // HDR 色調映射
   document.getElementById('container').appendChild(renderer.domElement); // 插入畫布
 
-  // 建立後處理合成器
-  composer = new EffectComposer(renderer);
-  composer.addPass(new RenderPass(scene, camera)); // 基本渲染 pass
+  if (CONFIG.performance.useBloom) {
+    // 建立後處理合成器
+    composer = new EffectComposer(renderer);
+    composer.addPass(new RenderPass(scene, camera)); // 基本渲染 pass
 
-  // 加入 UnrealBloomPass 做發光效果
-  // Bloom 內部會做多層降採樣模糊，用來計算模糊的解析度用一半畫布大小即可，
-  // 效果幾乎沒有差異（Bloom 本來就是柔光模糊），但運算量直接減半。
-  bloomPass = new UnrealBloomPass(
-    new THREE.Vector2(innerWidth * 0.5, innerHeight * 0.5), // 效果使用的解析度（降為一半）
-    CONFIG.bloom.strength,                      // 發光強度
-    CONFIG.bloom.radius,                        // 模糊半徑
-    CONFIG.bloom.threshold                      // 閾值
-  );
-  composer.addPass(bloomPass);
+    // 加入 UnrealBloomPass 做發光效果
+    bloomPass = new UnrealBloomPass(
+      new THREE.Vector2(innerWidth, innerHeight), // 效果使用的解析度
+      CONFIG.bloom.strength,                      // 發光強度
+      CONFIG.bloom.radius,                        // 模糊半徑
+      CONFIG.bloom.threshold                      // 閾值
+    );
+    composer.addPass(bloomPass);
+  }
 
   // 產生初始粒子
   createParticles(CONFIG.intro.count);
@@ -142,7 +148,11 @@ function init() {
 // 建立粒子幾何與材質
 function createParticles(num /* 粒子數量 */) {
   // 如果之前有粒子，先從場景移除
-  if (particles) scene.remove(particles);
+  if (particles) {
+    scene.remove(particles);
+    particles.geometry.dispose();
+    particles.material.dispose();
+  }
 
   const geo = new THREE.BufferGeometry();                   // 粒子幾何
   const pos = new Float32Array(num * 3);                    // 位置 (x,y,z)
@@ -153,7 +163,7 @@ function createParticles(num /* 粒子數量 */) {
     // 使用近似均勻分布在球面上的演算法
     const phi = Math.acos(-1 + (2 * i) / num);              // 緯度角
     const theta = Math.sqrt(num * Math.PI) * phi;           // 經度角 (漩渦式分布)
-    const r = 8 * shapeScale;                               // 球半徑（極窄螢幕才縮放，一般手機維持原尺寸）
+    const r = 8 * viewScale;                                // 球半徑（依螢幕比例縮放，避免手機直向超出畫面）
 
     // 初始位置：球面附近 + 少許亂數抖動
     pos[i * 3]     = r * Math.cos(theta) * Math.sin(phi) + (Math.random() - 0.5) * 0.5; // x
@@ -179,7 +189,7 @@ function createParticles(num /* 粒子數量 */) {
 
   // Points 材質 (加色混合 + HDR 感)
   const mat = new THREE.PointsMaterial({
-    size: CONFIG.isMobile ? 0.17 : 0.12, // 手機顆粒放大（數量降低但顆粒變大，整體看起來更紮實）
+    size: CONFIG.isMobile ? 0.18 : 0.12, // 手機粒子較少，用稍大尺寸維持視覺密度
     vertexColors: true,                  // 每個粒子使用自己的顏色
     blending: THREE.AdditiveBlending,    // 加色混合，產生發光感
     transparent: true,                   // 允許透明度
@@ -208,15 +218,17 @@ function setupMouseInteraction() {
   addEventListener('mousemove', e => onMove(e.clientX, e.clientY));
 
   // 觸控移動
-  addEventListener(
-    'touchmove',
-    e => {
-      if (e.touches[0]) {
-        onMove(e.touches[0].clientX, e.touches[0].clientY);
-      }
-    },
-    { passive: true } // 告訴瀏覽器不會阻止 scroll，提升效能
-  );
+  if (CONFIG.performance.enableTouchForce) {
+    addEventListener(
+      'touchmove',
+      e => {
+        if (e.touches[0]) {
+          onMove(e.touches[0].clientX, e.touches[0].clientY);
+        }
+      },
+      { passive: true } // 告訴瀏覽器不會阻止 scroll，提升效能
+    );
+  }
 
   // 滑鼠離開畫面 / 觸控結束，關閉滑鼠影響
   addEventListener('mouseleave', () => { mouse.active = false; });
@@ -349,14 +361,14 @@ function morphToText(text /* 要顯示的文字 */) {
     let tz; // 目標 z
 
     if (i < tp.length) {
-      // 前面一批粒子直接對應到文字點（乘上 textScale，避免手機直向時文字比畫面還寬）
-      tx = tp[i].x * textScale;
-      ty = tp[i].y * textScale;
+      // 前面一批粒子直接對應到文字點（乘上 viewScale，避免手機直向時文字比畫面還寬）
+      tx = tp[i].x * viewScale;
+      ty = tp[i].y * viewScale;
       tz = (Math.random() - 0.5) * 2; // Z 給一點深度亂數
     } else {
       // 多出來的粒子放到外圍，避免全部擠在文字上（同樣套用縮放）
       const a = Math.random() * Math.PI * 2; // 隨機角度
-      const r = (20 + Math.random() * 15) * textScale; // 隨機半徑
+      const r = (20 + Math.random() * 15) * viewScale; // 隨機半徑
       tx = Math.cos(a) * r;
       ty = Math.sin(a) * r;
       tz = (Math.random() - 0.5) * 20;
@@ -387,7 +399,7 @@ function morphToSphere() {
     // 與 createParticles 類似的球面分布
     const phi = Math.acos(-1 + (2 * i) / count);
     const theta = Math.sqrt(count * Math.PI) * phi;
-    const r = 8 * shapeScale; // 球半徑（極窄螢幕才縮放）
+    const r = 8 * viewScale; // 球半徑（依螢幕比例縮放）
 
     const tx = r * Math.cos(theta) * Math.sin(phi) + (Math.random() - 0.5) * 0.5;
     const ty = r * Math.sin(theta) * Math.sin(phi) + (Math.random() - 0.5) * 0.5;
@@ -419,10 +431,10 @@ function morphToSpherePlanet() {
     const planetCount = Math.floor(count * planetRatio);
     const ringCount = count - planetCount;   // 剩下的做星環
   
-    const planetRadius = 6 * shapeScale;               // 星球半徑（極窄螢幕才縮放）
-    const ringInner = 7.5 * shapeScale;                // 星環內半徑
-    const ringOuter = 11 * shapeScale;                 // 星環外半徑
-    const ringThickness = 0.6 * shapeScale;            // 星環厚度 (Y 方向)
+    const planetRadius = 6 * viewScale;               // 星球半徑（依螢幕比例縮放）
+    const ringInner = 7.5 * viewScale;                // 星環內半徑
+    const ringOuter = 11 * viewScale;                 // 星環外半徑
+    const ringThickness = 0.6 * viewScale;            // 星環厚度 (Y 方向)
   
     for (let i = 0; i < count; i++) {
       const idx = i * 3;
@@ -506,7 +518,9 @@ function transitionToBackground() {
   });
 
   // Bloom 稍微收斂，避免過亮
-  gsap.to(bloomPass, { strength: 0.7, duration: 1 });
+  if (bloomPass) {
+    gsap.to(bloomPass, { strength: 0.7, duration: 1 });
+  }
 
   // 等縮放移動動畫差不多後，切換為背景模式
   setTimeout(() => {
@@ -521,8 +535,10 @@ function transitionToBackground() {
 
     // 顯示滑鼠互動提示
     const hint = document.getElementById('hint');
-    hint.classList.add('show');
-    setTimeout(() => hint.classList.remove('show'), 4000); // 4 秒後隱藏提示
+    if (hint) {
+      hint.classList.add('show');
+      setTimeout(() => hint.classList.remove('show'), 4000); // 4 秒後隱藏提示
+    }
   }, 1200);
 
   // 主內容淡入
@@ -535,18 +551,10 @@ function transitionToBackground() {
 }
 
 // 每幀的動畫 loop
-// 加上兩層節流：
-// 1) FPS 上限：不管螢幕更新率多高，最多以 CONFIG.targetFPS 的速度渲染，視覺上感覺不出差異
-// 2) 分頁背景時完全暫停：使用者切到別的分頁/視窗時，沒有必要繼續佔用 GPU 運算
-const FRAME_INTERVAL = 1000 / CONFIG.targetFPS;
-let lastFrameTime = 0;
-let rafId = null;
-
 function animate(now = 0) {
-  rafId = requestAnimationFrame(animate); // 要求下一幀
-
-  // 距離上一次真正渲染還不到目標間隔時間，就先跳過，不做任何運算
-  if (now - lastFrameTime < FRAME_INTERVAL) return;
+  requestAnimationFrame(animate); // 要求下一幀
+  const frameInterval = 1000 / CONFIG.performance.maxFPS;
+  if (now - lastFrameTime < frameInterval) return;
   lastFrameTime = now;
 
   if (phase === 'intro') {
@@ -559,21 +567,13 @@ function animate(now = 0) {
     applyMouseForce();
   }
 
-  // 使用 composer 進行後處理渲染
-  composer.render();
-}
-
-// 分頁切到背景（切分頁、切視窗、螢幕鎖定）時直接停止渲染迴圈；
-// 使用者切回來再重新啟動，避免背景分頁還在持續吃 GPU。
-document.addEventListener('visibilitychange', () => {
-  if (document.hidden) {
-    cancelAnimationFrame(rafId);
-    rafId = null;
-  } else if (rafId === null) {
-    lastFrameTime = 0;
-    animate();
+  // 桌機使用 composer 後處理；手機直接 render，降低 GPU 負載
+  if (composer) {
+    composer.render();
+  } else {
+    renderer.render(scene, camera);
   }
-});
+}
 
 // 視窗尺寸改變時，更新相機與 renderer
 // 加上 debounce：手機旋轉螢幕、網址列收合展開時 resize 會連續觸發多次，
@@ -583,15 +583,14 @@ function handleResize() {
   camera.aspect = innerWidth / innerHeight; // 更新畫面比例
   camera.updateProjectionMatrix();          // 重新計算投影矩陣
   renderer.setSize(innerWidth, innerHeight);      // 更新 renderer 大小
-  composer.setSize(innerWidth, innerHeight);      // 更新後處理解析度
-  bloomPass.setSize(innerWidth * 0.5, innerHeight * 0.5); // Bloom 內部解析度維持在一半，持續節省 GPU
+  if (composer) composer.setSize(innerWidth, innerHeight); // 更新後處理解析度
 
-  const prevShapeScale = shapeScale;
+  const prevScale = viewScale;
   updateViewScale(); // 重新計算響應式縮放係數
 
   // 如果比例變化夠大（例如手機直向 <-> 橫向），且目前是背景常駐階段，
   // 重新 morph 一次讓粒子形狀依新的螢幕比例重新排列，避免旋轉後跑出畫面。
-  if (phase === 'background' && Math.abs(shapeScale - prevShapeScale) > 0.05) {
+  if (phase === 'background' && Math.abs(viewScale - prevScale) > 0.05) {
     morphToSpherePlanet();
   }
 }
